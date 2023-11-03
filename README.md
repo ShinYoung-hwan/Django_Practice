@@ -159,3 +159,124 @@
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
   ```
+
+## 템플릿 상속 
+ * 표준 HTML 구조
+  - 어떤 웹페이지에서는 정상적으로 동작하는 웹페이지를 만들기 위해서는 웹표준을 지키는 표준 HTML 문서를 작성해야한다.
+  ```html
+  <!doctype html>
+  <html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css">
+    <title>Hello, pybo!</title>
+  </head>
+  <body>
+  (... 생략 ...)
+  </body>
+  </html>
+  ```
+
+ * 템플릿 상속
+  - 상속할 템플릿과 상속될 템플릿에는 다음과 같이 작업해줘야한다.
+  ```html
+  <!-- base.html -->
+  {% block content %}
+  {% endblcok %}
+
+  <!-- question_list.html -->
+  {% extends 'base.html' %}
+  {% block content %}
+  <div class="container my-3">
+    <table class="table">
+
+      (... 생략 ...)
+
+    </table>
+  </div>
+  {% endblock %}
+  ```
+
+ * 템플릿 삽입
+  - HTML 문서 중간에 특정 HTML 문서를 삽입할 수도 있다.
+  - 반복되는 부분이나, 분리해서 작성할 때 유지보수가 쉬운 경우 주로 사용한다.
+  - 삽입하고 싶은 부분에 `{% include 'filename.html' %}`로 추가하면 된다.
+
+## 폼
+ * 폼(Form)
+  - 폼은 페이지 요청시 전달되는 파라미터들을 쉽게 관리하기 위해 사용하는 클래스이다.
+  - 필수 파라미터가 누락되지 않았는지, 파라미터 형식이 유효한지 검증하는 용도로도 사용된다.
+  - 추가로 HTML을 자동으로 생성하거나 폼에 연결된 모델을 이용하여 데이터를 저장하는 기능들도 있다.
+
+ * 폼 작성하기
+  - `pybo/forms.py` 파일을 생성한다.
+  ```py
+    # pybo/forms.py
+    from django import forms
+    from pybo.models import Question
+
+    class QuestionForm(forms.ModelForm):
+      class Meta:   
+        model = Question  # 사용할 모델
+        fields = ['subject', 'content']  # QuestionForm에서 사용할 Question 모델의 속성
+  ```
+
+  * 폼 위젯
+   - 폼을 HTML 문서에 부르는 방식 중 하나로 `{{ form.as_p }}`가 있다. 자동으로 웹문서를 작성해준다는 이점이 있지만, 스타일시트 적용은 어렵다는 문제점이 있다. 이럴 때 폼 위젯을 사용할 수 있다.
+   ```py
+   class QuestioinForm(forms.ModelForm):
+    class Meta:
+      model = Question # # 사용할 모델
+      fields = [ # QuestionForm에서 사용할 Question 모델의 속성
+        'subject',
+        'content'
+      ]
+      widgets = {
+        'subject': forms.TextInput(attrs={'class': 'form-control'}),
+        'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+      }
+   ```
+
+  * 폼 레이블
+   - 위와 유사하게 폼을 웹문서를 불러올 때, 필드 명으로 불러오게 되는데, 이때 이를 커스텀하기 위해서 폼 레이블을 사용할 수 있다.
+   ```py
+    class QuestioinForm(forms.ModelForm):
+      class Meta:
+        model = Question # # 사용할 모델
+        fields = [ # QuestionForm에서 사용할 Question 모델의 속성
+          'subject',
+          'content'
+        ]
+        widgets = {
+          'subject': forms.TextInput(attrs={'class': 'form-control'}),
+          'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }
+        labels = {
+          'subject': '제목',
+          'content': '내용',
+          }
+   ```
+
+  - 더 자세한 내용은 다음을 참고하면 된다. [Django Forms](https://docs.djangoproject.com/en/4.0/topics/forms/)
+
+  * 수동 폼
+   - 폼 위젯으로도 스타일시트 적용이 적합하지 않다고 생각될 경우에는 수동 폼을 이용하는 방법도 있다.
+   - 실제로는 `{{ form.as_p }}`를 이용하면 개발자와 디자이너의 영역이 모호해질 수 있으므로 작업에 문제가 생길 수도 있다.
+   - 이때 폼에는 오류에 대한 값도 저장하고 있으므로 필수 필드 값 누락을 웹문서 상에 보여줄 수도 있다.
+   ```html
+    <!-- 오류표시 Start -->
+    {% if form.errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for field in form %}
+      {% if field.errors %}
+      <div>
+        <strong>{{ field.label }}</strong>
+        {{ field.errors }}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    <!-- 오류표시 End -->
+   ```
