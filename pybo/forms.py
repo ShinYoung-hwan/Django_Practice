@@ -2,7 +2,7 @@ from django import forms
 
 from pybo.models import Question, Answer
 
-class QuestioinForm(forms.ModelForm):
+class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question # # 사용할 모델
         fields = [ # QuestionForm에서 사용할 Question 모델의 속성
